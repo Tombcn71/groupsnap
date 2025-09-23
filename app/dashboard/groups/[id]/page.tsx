@@ -1,6 +1,51 @@
 "use client"
 
+import { useState } from "react"
+
 export default function GroupPage({ params }: { params: { id: string } }) {
+  const [inviteEmail, setInviteEmail] = useState("")
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [members, setMembers] = useState([
+    { email: "you@example.com", status: "Owner" },
+    { email: "member1@example.com", status: "Confirmed" },
+    { email: "member2@example.com", status: "Invited" }
+  ])
+
+  const handleInvite = async () => {
+    if (!inviteEmail.trim()) {
+      alert("Please enter an email address")
+      return
+    }
+
+    setInviteLoading(true)
+    try {
+      const response = await fetch("/api/invite-member", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          groupId: params.id,
+          email: inviteEmail.trim()
+        })
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        alert(result.message)
+        setInviteEmail("")
+        // Add to local state
+        setMembers(prev => [...prev, { email: inviteEmail.trim(), status: "Invited" }])
+      } else {
+        alert(`Error: ${result.error}`)
+      }
+    } catch (error) {
+      alert("Failed to send invite. Please try again.")
+      console.error("Invite error:", error)
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-2">Your Group</h1>
@@ -16,13 +61,17 @@ export default function GroupPage({ params }: { params: { id: string } }) {
             <input 
               type="email" 
               placeholder="Enter email address"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
               className="border border-gray-300 px-3 py-2 rounded flex-1"
+              disabled={inviteLoading}
             />
             <button 
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-              onClick={() => alert("✅ Member invited!")}
+              className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-4 py-2 rounded"
+              onClick={handleInvite}
+              disabled={inviteLoading}
             >
-              Send Invite
+              {inviteLoading ? "Sending..." : "Send Invite"}
             </button>
           </div>
         </div>
@@ -73,20 +122,22 @@ export default function GroupPage({ params }: { params: { id: string } }) {
 
         {/* Members List */}
         <div className="bg-white border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">👥 Group Members</h2>
+          <h2 className="text-xl font-semibold mb-4">👥 Group Members ({members.length})</h2>
           <div className="space-y-2">
-            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-              <span>you@example.com</span>
-              <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">Owner</span>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-              <span>member1@example.com</span>
-              <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">Confirmed</span>
-            </div>
-            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-              <span>member2@example.com</span>
-              <span className="text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Invited</span>
-            </div>
+            {members.map((member, index) => (
+              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span>{member.email}</span>
+                <span className={`text-sm px-2 py-1 rounded ${
+                  member.status === 'Owner' 
+                    ? 'bg-green-100 text-green-800'
+                    : member.status === 'Confirmed'
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {member.status}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
