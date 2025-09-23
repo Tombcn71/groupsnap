@@ -1,10 +1,11 @@
-import { type NextRequest, NextResponse } from "next/server"
+eimport { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenerativeAI } from "@google/genai"
 
 export async function POST(request: NextRequest) {
+  const { groupId } = await request.json()
+  
   try {
-    const { groupId } = await request.json()
 
     if (!groupId) {
       return NextResponse.json({ error: "Group ID required" }, { status: 400 })
@@ -54,14 +55,14 @@ export async function POST(request: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
 
     // Select the first background for now (could be randomized or user-selected)
     const selectedBackground = backgrounds[0]
 
     // Fetch member photos as base64
     const memberPhotoData = await Promise.all(
-      memberPhotos.map(async (member) => {
+      memberPhotos.map(async (member: any) => {
         const response = await fetch(member.photoUrl)
         const buffer = await response.arrayBuffer()
         const base64 = Buffer.from(buffer).toString("base64")
@@ -80,22 +81,24 @@ export async function POST(request: NextRequest) {
     const backgroundBase64 = Buffer.from(backgroundBuffer).toString("base64")
     const backgroundMimeType = backgroundResponse.headers.get("content-type") || "image/jpeg"
 
-    // Create the prompt for group photo composition
-    const memberNames = memberPhotos.map((m) => m.name).join(", ")
-    const prompt = `Create a realistic group photo by composing the individual photos of ${memberNames} into the provided background scene. 
+    // Create the prompt for Nano Banana group photo composition
+    const memberNames = memberPhotos.map((m: any) => m.name).join(", ")
+    const prompt = `Use Nano Banana to create a realistic group photo by seamlessly composing these ${memberPhotoData.length} individual people into the provided background scene.
 
-Instructions:
-- Place each person naturally in the background setting
-- Maintain realistic lighting and shadows that match the background
-- Ensure all people are clearly visible and well-positioned
-- Create a natural, candid group photo composition
-- Preserve the facial features and characteristics of each person
-- Make the lighting and color grading consistent across all subjects
-- Position people at appropriate distances and angles for a natural group photo
+Target: Create a natural group photo of ${memberNames} in ${selectedBackground.name || "this location"}
 
-The background setting is: ${selectedBackground.name || "a scenic location"}
+Nano Banana Instructions:
+- Seamlessly integrate each person into the background scene
+- Match lighting, shadows, and perspective to the background environment
+- Maintain photorealistic quality and natural positioning
+- Preserve each person's facial features and characteristics exactly
+- Create natural group dynamics with appropriate spacing and interaction
+- Ensure consistent color grading and lighting across all subjects
+- Position people at realistic depths and angles for the scene
+- Make it look like an authentic group photo taken in this location
 
-Please generate a high-quality, realistic group photo that looks like it was naturally taken in this location.`
+Style: Photorealistic, natural lighting, professional group photo quality
+Output: High-resolution composite image that looks authentically photographed`
 
     // Prepare the content array with background and member photos
     const contents = [
@@ -114,30 +117,81 @@ Please generate a high-quality, realistic group photo that looks like it was nat
       })),
     ]
 
-    // Generate the group photo using Gemini 2.0 Flash Image
-    // Note: Gemini 2.0 Flash doesn't generate images, only text
-    // This would need to be updated to use an image generation model
-    // For now, return an error indicating this feature needs proper image generation setup
-    return NextResponse.json(
-      {
-        error:
-          "Image generation not properly configured. Please use an image generation service like DALL-E or Midjourney.",
-      },
-      { status: 501 },
-    )
-
-    // Extract the generated image
-    const generatedImageUrl = null
+    // Generate the group photo using Gemini 2.5 Flash with Nano Banana
+    console.log("Generating group photo with Nano Banana...")
+    
+    const response = await model.generateContent(contents)
     const result = await response.response
+    
+    // Check if the response contains image data
+    let generatedImageUrl = null
+    
+    // For Nano Banana, we need to check if it returns image data
+    if (result.candidates && result.candidates[0]) {
+      const candidate = result.candidates[0]
+      
+      // Check if there's image data in the response
+      if (candidate.content && candidate.content.parts) {
+        for (const part of candidate.content.parts) {
+          if (part.inlineData && part.inlineData.data) {
+            // Convert base64 back to blob and upload to storage
+            const imageBuffer = Buffer.from(part.inlineData.data, 'base64')
+            const imageBlob = new Blob([imageBuffer], { type: part.inlineData.mimeType || 'image/jpeg' })
+            
+            // Upload generated image to Vercel Blob
+            const { put } = await import("@vercel/blob")
+            const filename = `generated-group-${groupId}-${Date.now()}.jpg`
+            const uploadResult = await put(filename, imageBlob, {
+              access: "public",
+            })
+            
+            generatedImageUrl = uploadResult.url
+            break
+          }
+        }
+      }
+    }
+    
+    // If no image was generated, try to extract from text response
+    if (!generatedImageUrl && result.text) {
+      console.log("No direct image generated, checking response:", result.text())
+      // For debugging - log the response to understand what Nano Banana returns
+    }
 
-    // Update group status to completed
-    await supabase.from("groups").update({ status: "completed" }).eq("id", groupId)
+    // Save generated photo to database if successful
+    if (generatedImageUrl) {
+      await supabase.from("generated_photos").insert({
+        group_id: groupId,
+        image_url: generatedImageUrl,
+        prompt_used: prompt,
+        generation_metadata: {
+          model: "gemini-2.5-flash",
+          feature: "nano-banana",
+          member_count: memberPhotoData.length,
+          background: selectedBackground.name || "uploaded background"
+        }
+      })
 
-    return NextResponse.json({
-      success: true,
-      generatedImageUrl,
-      message: "Group photo generated successfully!",
-    })
+      // Update group status to completed
+      await supabase.from("groups").update({ 
+        status: "completed",
+        generated_photo_url: generatedImageUrl 
+      }).eq("id", groupId)
+
+      return NextResponse.json({
+        success: true,
+        generatedImageUrl,
+        message: "Group photo generated successfully with Nano Banana!",
+      })
+    } else {
+      // If generation failed, reset status and return error
+      await supabase.from("groups").update({ status: "collecting" }).eq("id", groupId)
+      
+      return NextResponse.json({
+        error: "Failed to generate image. Nano Banana might not have returned image data. Check console for details.",
+        debug: result.text ? result.text() : "No response text available"
+      }, { status: 500 })
+    }
   } catch (error) {
     console.error("Generation error:", error)
 
