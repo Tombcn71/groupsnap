@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { put } from "@vercel/blob"
 
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
@@ -45,7 +47,9 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Database error:", error)
-      return NextResponse.json({ error: "Failed to save photo" }, { status: 500 })
+      return NextResponse.json({ 
+        error: "Failed to save photo: " + error.message 
+      }, { status: 500 })
     }
 
     return NextResponse.json({
@@ -57,6 +61,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("Upload error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ 
+      error: "Internal server error: " + error.message 
+    }, { status: 500 })
   }
 }
