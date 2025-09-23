@@ -5,6 +5,8 @@ import { useState } from "react"
 export default function GroupPage({ params }: { params: { id: string } }) {
   const [inviteEmail, setInviteEmail] = useState("")
   const [inviteLoading, setInviteLoading] = useState(false)
+  const [photoLoading, setPhotoLoading] = useState(false)
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([])
   const [members, setMembers] = useState([
     { email: "you@example.com", status: "Owner" },
     { email: "member1@example.com", status: "Confirmed" },
@@ -73,6 +75,27 @@ export default function GroupPage({ params }: { params: { id: string } }) {
             >
               {inviteLoading ? "Sending..." : "Send Invite"}
             </button>
+          </div>
+        </div>
+
+        {/* Show Members with invite status */}
+        <div className="bg-white border rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">📋 Recent Invites</h2>
+          <div className="space-y-2">
+            {members.slice(-3).map((member, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                <span className="font-medium">{member.email}</span>
+                <span className={`px-3 py-1 rounded text-sm ${
+                  member.status === 'Owner' 
+                    ? 'bg-green-100 text-green-800'
+                    : member.status === 'Confirmed'
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {member.status}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
