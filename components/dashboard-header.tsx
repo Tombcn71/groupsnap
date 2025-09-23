@@ -13,10 +13,11 @@ import { Camera, Settings, LogOut, User } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { SimpleThemeToggle } from "@/components/theme-toggle"
 
 interface DashboardHeaderProps {
   user: any
-  profile: any
+  profile?: any
 }
 
 export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
@@ -49,6 +50,7 @@ export function DashboardHeader({ user, profile }: DashboardHeaderProps) {
           </Link>
 
           <div className="flex items-center space-x-4">
+            <SimpleThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">

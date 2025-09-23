@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Camera, Users, Sparkles, School, Building2, CheckCircle, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { SimpleThemeToggle } from "@/components/theme-toggle"
 
 export default function HomePage() {
   return (
@@ -27,6 +28,7 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
+              <SimpleThemeToggle />
               <Link href="/auth/login">
                 <Button variant="ghost" size="sm">
                   Sign In
