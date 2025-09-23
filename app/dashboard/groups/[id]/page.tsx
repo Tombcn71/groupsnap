@@ -1,17 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export default function GroupPage({ params }: { params: { id: string } }) {
   const [inviteEmail, setInviteEmail] = useState("")
   const [inviteLoading, setInviteLoading] = useState(false)
   const [photoLoading, setPhotoLoading] = useState(false)
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([])
+  const [shareUrl, setShareUrl] = useState("")
   const [members, setMembers] = useState([
     { email: "you@example.com", status: "Owner" },
     { email: "member1@example.com", status: "Confirmed" },
     { email: "member2@example.com", status: "Invited" }
   ])
+
+  useEffect(() => {
+    setShareUrl(`${window.location.origin}/join/${params.id}`)
+  }, [params.id])
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) {
@@ -89,7 +94,32 @@ export default function GroupPage({ params }: { params: { id: string } }) {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-2">Your Group 🚀</h1>
-      <p className="text-gray-600 mb-8">ID: {params.id}</p>
+      <p className="text-gray-600 mb-2">ID: {params.id}</p>
+      
+      {/* Share Link */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <h3 className="font-semibold text-blue-800 mb-2">📱 Deel deze link met je groep:</h3>
+        <div className="flex gap-2">
+          <input 
+            type="text" 
+            value={shareUrl}
+            readOnly
+            className="flex-1 px-3 py-2 bg-white border border-blue-300 rounded text-sm"
+          />
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(shareUrl)
+              alert("Link gekopieerd! 📋")
+            }}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm"
+          >
+            Kopieer
+          </button>
+        </div>
+        <p className="text-xs text-blue-600 mt-2">
+          Mensen kunnen deze link gebruiken om hun foto te uploaden (geen account nodig)
+        </p>
+      </div>
       
       <div className="space-y-6">
         {/* Invite Members */}
