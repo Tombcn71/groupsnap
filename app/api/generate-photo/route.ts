@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { GoogleGenerativeAI } from "@google/genai"
+import { GoogleGenAI } from "@google/genai"
 
 export async function POST(request: NextRequest) {
   const { groupId } = await request.json()
@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Need at least 1 background image" }, { status: 400 })
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+    const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY })
+    const model = genAI.models.generateContent
 
     // Select the first background for now (could be randomized or user-selected)
     const selectedBackground = backgrounds[0]
@@ -120,7 +120,21 @@ Output: High-resolution composite image that looks authentically photographed`
     // Generate the group photo using Gemini 2.5 Flash with Nano Banana
     console.log("Generating group photo with Nano Banana...")
     
-    const response = await model.generateContent(contents)
+    const response = await model({
+      model: "gemini-2.0-flash-exp",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType: backgroundMimeType, data: backgroundBase64 } },
+            ...memberPhotoData.map(member => ({ 
+              inlineData: { mimeType: member.mimeType, data: member.data } 
+            }))
+          ]
+        }
+      ]
+    })
     const result = await response.response
     
     // Check if the response contains image data
