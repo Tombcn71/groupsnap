@@ -21,7 +21,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
 
     setInviteLoading(true)
     try {
-      const response = await fetch("/api/invite-member", {
+      const response = await fetch("/api/invite-v2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
