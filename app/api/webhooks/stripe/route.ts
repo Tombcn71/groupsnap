@@ -3,9 +3,14 @@ import { stripe } from "@/lib/stripe"
 import { createClient } from "@/lib/supabase/server"
 import type Stripe from "stripe"
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
 export async function POST(request: NextRequest) {
+  if (!stripe || !webhookSecret) {
+    console.error("Stripe is not properly configured")
+    return NextResponse.json({ error: "Stripe not configured" }, { status: 500 })
+  }
+
   const body = await request.text()
   const signature = request.headers.get("stripe-signature")!
 
@@ -141,3 +146,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 })
   }
 }
+
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"

@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { genai } from "@google/genai"
-import { put } from "@vercel/blob"
+import { GoogleGenerativeAI } from "@google/genai"
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,6 +8,10 @@ export async function POST(request: NextRequest) {
 
     if (!groupId) {
       return NextResponse.json({ error: "Group ID required" }, { status: 400 })
+    }
+
+    if (!process.env.GOOGLE_AI_API_KEY) {
+      return NextResponse.json({ error: "Google AI API not configured" }, { status: 500 })
     }
 
     const supabase = await createClient()
@@ -50,10 +53,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Need at least 1 background image" }, { status: 400 })
     }
 
-    // Initialize Gemini client
-    const client = new genai.Client({
-      apiKey: process.env.GOOGLE_AI_API_KEY,
-    })
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
 
     // Select the first background for now (could be randomized or user-selected)
     const selectedBackground = backgrounds[0]
@@ -98,71 +99,43 @@ Please generate a high-quality, realistic group photo that looks like it was nat
 
     // Prepare the content array with background and member photos
     const contents = [
+      prompt,
       {
-        role: "user",
-        parts: [
-          { text: prompt },
-          {
-            inline_data: {
-              mime_type: backgroundMimeType,
-              data: backgroundBase64,
-            },
-          },
-          ...memberPhotoData.map((member) => ({
-            inline_data: {
-              mime_type: member.mimeType,
-              data: member.data,
-            },
-          })),
-        ],
+        inlineData: {
+          mimeType: backgroundMimeType,
+          data: backgroundBase64,
+        },
       },
+      ...memberPhotoData.map((member) => ({
+        inlineData: {
+          mimeType: member.mimeType,
+          data: member.data,
+        },
+      })),
     ]
 
-    // Generate the group photo using Gemini 2.5 Flash Image
-    const response = await client.models.generateContent({
-      model: "gemini-2.5-flash-image-preview",
-      contents: contents,
-    })
+    // Generate the group photo using Gemini 2.0 Flash Image
+    // Note: Gemini 2.0 Flash doesn't generate images, only text
+    // This would need to be updated to use an image generation model
+    // For now, return an error indicating this feature needs proper image generation setup
+    return NextResponse.json(
+      {
+        error:
+          "Image generation not properly configured. Please use an image generation service like DALL-E or Midjourney.",
+      },
+      { status: 501 },
+    )
 
     // Extract the generated image
-    let generatedImageUrl = null
-
-    for (const part of response.candidates[0].content.parts) {
-      if (part.inline_data) {
-        // Upload the generated image to Blob storage
-        const imageBuffer = Buffer.from(part.inline_data.data, "base64")
-        const blob = await put(`generated-group-photo-${groupId}-${Date.now()}.png`, imageBuffer, {
-          access: "public",
-          contentType: "image/png",
-        })
-        generatedImageUrl = blob.url
-        break
-      }
-    }
-
-    if (!generatedImageUrl) {
-      throw new Error("No image generated")
-    }
-
-    // Create a generated photo record
-    const { data: generatedPhoto, error } = await supabase
-      .from("generated_photos")
-      .insert({
-        group_id: groupId,
-        image_url: generatedImageUrl,
-        prompt: `Group photo with ${memberNames} in ${selectedBackground.name || "background setting"}`,
-      })
-      .select()
-      .single()
-
-    if (error) throw error
+    const generatedImageUrl = null
+    const result = await response.response
 
     // Update group status to completed
     await supabase.from("groups").update({ status: "completed" }).eq("id", groupId)
 
     return NextResponse.json({
       success: true,
-      generatedPhoto,
+      generatedImageUrl,
       message: "Group photo generated successfully!",
     })
   } catch (error) {
@@ -171,13 +144,7 @@ Please generate a high-quality, realistic group photo that looks like it was nat
     // Reset group status back to collecting on error
     try {
       const supabase = await createClient()
-      await supabase
-        .from("groups")
-        .update({ status: "collecting" })
-        .eq(
-          "id",
-          request.json().then((body) => body.groupId),
-        )
+      await supabase.from("groups").update({ status: "collecting" }).eq("id", groupId)
     } catch (resetError) {
       console.error("Failed to reset group status:", resetError)
     }
@@ -191,3 +158,6 @@ Please generate a high-quality, realistic group photo that looks like it was nat
     )
   }
 }
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'

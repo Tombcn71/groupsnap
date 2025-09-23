@@ -5,6 +5,10 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
 export async function createCheckoutSession(plan: PlanType) {
+  if (!stripe) {
+    throw new Error("Stripe is not configured. Please set up your Stripe environment variables.")
+  }
+
   const supabase = await createClient()
 
   const {
@@ -51,6 +55,10 @@ export async function createCheckoutSession(plan: PlanType) {
 }
 
 export async function createPortalSession() {
+  if (!stripe) {
+    throw new Error("Stripe is not configured. Please set up your Stripe environment variables.")
+  }
+
   const supabase = await createClient()
 
   const {
