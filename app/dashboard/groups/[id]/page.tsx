@@ -74,7 +74,8 @@ export default function GroupPage({ params }: { params: { id: string } }) {
 
       if (response.ok) {
         alert(result.message)
-        setUploadedPhotos(prev => [...prev, result.url])
+        // Replace existing photo instead of adding
+        setUploadedPhotos([result.url])
         // Clear the file input
         e.target.value = ""
       } else {
@@ -167,8 +168,23 @@ export default function GroupPage({ params }: { params: { id: string } }) {
         {/* Upload Photo */}
         <div className="bg-white border rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
-            📸 Upload Your Photo
+            📸 Je Foto voor de Groepsfoto
           </h2>
+          
+          {uploadedPhotos.length > 0 ? (
+            <div className="mb-4">
+              <p className="text-sm text-green-600 mb-2">✅ Je foto is geüpload:</p>
+              <img 
+                src={uploadedPhotos[uploadedPhotos.length - 1]} 
+                alt="Je foto" 
+                className="w-24 h-24 object-cover rounded border-2 border-green-200" 
+              />
+              <p className="text-xs text-gray-500 mt-1">Upload een nieuwe foto om deze te vervangen</p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600 mb-3">Upload 1 duidelijke foto van jezelf</p>
+          )}
+          
           <input 
             type="file" 
             accept="image/*" 
@@ -176,20 +192,16 @@ export default function GroupPage({ params }: { params: { id: string } }) {
             onChange={handlePhotoUpload}
             disabled={photoLoading}
           />
-          <p className="text-sm text-gray-500">Choose a clear photo of yourself</p>
+          
           {photoLoading && (
-            <div className="mt-2 text-blue-600">📤 Uploading photo...</div>
+            <div className="mt-2 text-blue-600">📤 Foto uploaden...</div>
           )}
-          {uploadedPhotos.length > 0 && (
-            <div className="mt-4">
-              <h4 className="font-semibold mb-2">Uploaded Photos ({uploadedPhotos.length}):</h4>
-              <div className="grid grid-cols-2 gap-2">
-                {uploadedPhotos.map((url, index) => (
-                  <img key={index} src={url} alt="Uploaded" className="w-20 h-20 object-cover rounded border" />
-                ))}
-              </div>
-            </div>
-          )}
+          
+          <div className="bg-blue-50 p-3 rounded mt-3">
+            <p className="text-xs text-blue-700">
+              💡 <strong>Tip:</strong> Gebruik een duidelijke foto van je gezicht. Deze wordt gebruikt voor de AI groepsfoto.
+            </p>
+          </div>
         </div>
 
         {/* Upload Background */}
