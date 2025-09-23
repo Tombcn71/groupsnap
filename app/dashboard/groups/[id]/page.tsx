@@ -31,6 +31,8 @@ export default function GroupPage({ params }: { params: { id: string } }) {
       })
 
       const result = await response.json()
+      
+      console.log("API Response:", response.status, result)
 
       if (response.ok) {
         alert(result.message)
@@ -39,6 +41,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
         setMembers(prev => [...prev, { email: inviteEmail.trim(), status: "Invited" }])
       } else {
         alert(`Error: ${result.error}`)
+        console.error("API Error:", result)
       }
     } catch (error) {
       alert("Failed to send invite. Please try again.")
