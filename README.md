@@ -1,14 +1,19 @@
-# Group photo generator
+# GroupSnap - AI-Powered Group Photos 🎨
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+*Professional group photo generation using Gemini 2.5 Flash + Nano Banana*
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/my-team-801094ad/v0-group-photo-generator)
 [![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/gcKforT8gaL)
 
-## Overview
+## Features ✨
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+- 🤖 **AI Photo Generation** - Gemini 2.5 Flash with Nano Banana for photorealistic group compositions
+- 👥 **User Invitations** - Invite team members via email to upload their photos
+- 🎨 **Background Integration** - Upload school/company backgrounds for seamless integration
+- 🌙 **Light/Dark Mode** - Beautiful theme switching with smooth transitions
+- 📱 **Responsive Design** - Works perfectly on all devices
+- 🔒 **Secure & Private** - Row Level Security with Supabase
+- ⚡ **Real-time Updates** - Live progress tracking and status updates
 
 ## Deployment
 

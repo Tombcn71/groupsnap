@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   description:
     "Create perfect group photos with AI. Upload individual photos and backgrounds, let our AI compose stunning group photos for schools and companies.",
   generator: "GroupSnap",
+  keywords: ["AI", "group photos", "photo composition", "Gemini", "Nano Banana", "schools", "companies"],
 }
 
 export default function RootLayout({
