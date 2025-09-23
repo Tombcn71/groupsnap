@@ -51,6 +51,41 @@ export default function GroupPage({ params }: { params: { id: string } }) {
     }
   }
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setPhotoLoading(true)
+    try {
+      const formData = new FormData()
+      formData.append("photo", file)
+      formData.append("groupId", params.id)
+      formData.append("userId", "current-user") // We'll fix this later with real auth
+
+      const response = await fetch("/api/upload-photo", {
+        method: "POST",
+        body: formData
+      })
+
+      const result = await response.json()
+      console.log("Photo upload result:", result)
+
+      if (response.ok) {
+        alert(result.message)
+        setUploadedPhotos(prev => [...prev, result.url])
+        // Clear the file input
+        e.target.value = ""
+      } else {
+        alert(`Error: ${result.error}`)
+      }
+    } catch (error) {
+      alert("Failed to upload photo. Please try again.")
+      console.error("Photo upload error:", error)
+    } finally {
+      setPhotoLoading(false)
+    }
+  }
+
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-2">Your Group 🚀</h1>
@@ -111,9 +146,23 @@ export default function GroupPage({ params }: { params: { id: string } }) {
             type="file" 
             accept="image/*" 
             className="block mb-3 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700"
-            onChange={(e) => e.target.files?.[0] && alert("✅ Photo uploaded!")}
+            onChange={handlePhotoUpload}
+            disabled={photoLoading}
           />
           <p className="text-sm text-gray-500">Choose a clear photo of yourself</p>
+          {photoLoading && (
+            <div className="mt-2 text-blue-600">📤 Uploading photo...</div>
+          )}
+          {uploadedPhotos.length > 0 && (
+            <div className="mt-4">
+              <h4 className="font-semibold mb-2">Uploaded Photos ({uploadedPhotos.length}):</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {uploadedPhotos.map((url, index) => (
+                  <img key={index} src={url} alt="Uploaded" className="w-20 h-20 object-cover rounded border" />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Upload Background */}
