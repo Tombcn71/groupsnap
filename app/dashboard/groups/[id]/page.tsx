@@ -6,7 +6,9 @@ export default function GroupPage({ params }: { params: { id: string } }) {
   const [inviteEmail, setInviteEmail] = useState("")
   const [inviteLoading, setInviteLoading] = useState(false)
   const [photoLoading, setPhotoLoading] = useState(false)
+  const [generateLoading, setGenerateLoading] = useState(false)
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([])
+  const [generatedPhoto, setGeneratedPhoto] = useState<string | null>(null)
   const [members, setMembers] = useState([
     { email: "you@example.com", status: "Owner" },
     { email: "member1@example.com", status: "Confirmed" },
@@ -86,6 +88,35 @@ export default function GroupPage({ params }: { params: { id: string } }) {
       console.error("Photo upload error:", error)
     } finally {
       setPhotoLoading(false)
+    }
+  }
+
+  const handleGeneratePhoto = async () => {
+    setGenerateLoading(true)
+    try {
+      const response = await fetch("/api/generate-photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          groupId: params.id
+        })
+      })
+
+      const result = await response.json()
+      console.log("Generation result:", result)
+
+      if (response.ok) {
+        setGeneratedPhoto(result.generatedImageUrl)
+        alert("🎉 " + result.message)
+      } else {
+        alert(`Generation failed: ${result.error}`)
+        console.error("Generation error:", result)
+      }
+    } catch (error) {
+      alert("Failed to generate photo. Please try again.")
+      console.error("Generation error:", error)
+    } finally {
+      setGenerateLoading(false)
     }
   }
 
@@ -227,12 +258,55 @@ export default function GroupPage({ params }: { params: { id: string } }) {
             Ready to create your AI-generated group photo with Nano Banana!
           </p>
           <button 
-            className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold"
-            onClick={() => alert("🚀 Generating group photo with Gemini 2.5 Flash + Nano Banana!\n\nThis would normally take 30-60 seconds...")}
+            className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-8 py-3 rounded-lg text-lg font-semibold"
+            onClick={handleGeneratePhoto}
+            disabled={generateLoading}
           >
-            ✨ Generate with Nano Banana
+            {generateLoading ? (
+              <span className="flex items-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Generating...
+              </span>
+            ) : (
+              "✨ Generate with Nano Banana"
+            )}
           </button>
         </div>
+
+        {/* Generated Photo Result */}
+        {generatedPhoto && (
+          <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4 text-green-800">
+              🎉 Je AI Groepsfoto is Klaar!
+            </h2>
+            <div className="text-center">
+              <img 
+                src={generatedPhoto} 
+                alt="Generated group photo" 
+                className="max-w-full h-auto rounded-lg shadow-lg mx-auto mb-4"
+              />
+              <div className="flex gap-2 justify-center">
+                <button 
+                  onClick={() => window.open(generatedPhoto, '_blank')}
+                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                >
+                  📷 View Full Size
+                </button>
+                <button 
+                  onClick={() => {
+                    const link = document.createElement('a')
+                    link.href = generatedPhoto
+                    link.download = `groepsfoto-${params.id}.jpg`
+                    link.click()
+                  }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  💾 Download
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Members List */}
         <div className="bg-white border rounded-lg p-6">

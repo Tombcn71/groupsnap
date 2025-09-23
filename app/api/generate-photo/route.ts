@@ -120,11 +120,13 @@ Output: High-resolution composite image that looks authentically photographed`
     // Generate the group photo using Gemini 2.5 Flash with Nano Banana
     console.log("Generating group photo with Nano Banana...")
     
+    const model = genAI.models.generateContent
+    
     const response = await model({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.5-flash",
       contents: [
         {
-          role: "user",
+          role: "user", 
           parts: [
             { text: prompt },
             { inlineData: { mimeType: backgroundMimeType, data: backgroundBase64 } },
