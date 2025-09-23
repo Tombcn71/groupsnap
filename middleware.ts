@@ -3,9 +3,11 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  // Skip auth for working-group and demo-group
+  // Skip auth for test pages
   if (request.nextUrl.pathname.startsWith('/working-group') || 
-      request.nextUrl.pathname.startsWith('/demo-group')) {
+      request.nextUrl.pathname.startsWith('/demo-group') ||
+      request.nextUrl.pathname.startsWith('/test-group') ||
+      request.nextUrl.pathname.startsWith('/simple-test')) {
     return NextResponse.next()
   }
   
