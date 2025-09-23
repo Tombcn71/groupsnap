@@ -1,7 +1,14 @@
 import { updateSession } from "@/lib/supabase/middleware"
 import type { NextRequest } from "next/server"
+import { NextResponse } from "next/server"
 
 export async function middleware(request: NextRequest) {
+  // Skip auth for working-group and demo-group
+  if (request.nextUrl.pathname.startsWith('/working-group') || 
+      request.nextUrl.pathname.startsWith('/demo-group')) {
+    return NextResponse.next()
+  }
+  
   return await updateSession(request)
 }
 
