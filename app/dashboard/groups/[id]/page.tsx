@@ -1,22 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 export default function GroupPage({ params }: { params: { id: string } }) {
   const [inviteEmail, setInviteEmail] = useState("")
   const [inviteLoading, setInviteLoading] = useState(false)
   const [photoLoading, setPhotoLoading] = useState(false)
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([])
-  const [shareUrl, setShareUrl] = useState("")
   const [members, setMembers] = useState([
     { email: "you@example.com", status: "Owner" },
     { email: "member1@example.com", status: "Confirmed" },
     { email: "member2@example.com", status: "Invited" }
   ])
 
-  useEffect(() => {
-    setShareUrl(`${window.location.origin}/join/${params.id}`)
-  }, [params.id])
+  const shareUrl = `https://v0-group-photo-generator.vercel.app/join/${params.id}`
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) {
