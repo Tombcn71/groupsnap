@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { Resend } from "resend"
 
 export const runtime = 'nodejs'
+// Force deployment trigger
 
 export async function POST(request: NextRequest) {
   try {
