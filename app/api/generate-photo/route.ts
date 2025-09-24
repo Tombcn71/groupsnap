@@ -95,16 +95,13 @@ export async function POST(request: NextRequest) {
     
     const model = 'gemini-2.5-flash-image-preview'
     
-    const prompt = `Create a clean, professional photo collage layout showing these ${images.length} team members.
+    const prompt = `Create a clean, professional meet the teamlayout showing these ${images.length} team members.
 
 INSTRUCTIONS:
-- Create a grid or arranged layout of the individual photos
+
 - Keep each person's photo exactly as provided - do not modify faces
 - Add a professional background or frame around the arrangement
-- Make it look like a "Meet the Team" style layout
 - Clean, modern corporate design
-- Equal sizing for each person's photo
-- Professional spacing and alignment
 
 Style: Corporate team showcase, clean layout, professional presentation`
 
