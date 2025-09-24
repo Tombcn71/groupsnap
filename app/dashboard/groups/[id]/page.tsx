@@ -362,8 +362,8 @@ export default function GroupPage({ params }: { params: { id: string } }) {
 
           <div className="space-y-2">
             {members.map((member, index) => {
-              const hasPhoto = memberPhotos.some(photo => photo.user_id === member.user_id || photo.email === member.email)
-              const memberPhoto = memberPhotos.find(photo => photo.user_id === member.user_id || photo.email === member.email)
+              const hasPhoto = memberPhotos.some(photo => photo.user_id === member.user_id || photo.display_name === member.email || photo.email === member.email)
+              const memberPhoto = memberPhotos.find(photo => photo.user_id === member.user_id || photo.display_name === member.email || photo.email === member.email)
               
               return (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">

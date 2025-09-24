@@ -11,7 +11,6 @@ export default function JoinGroupPage({ params }: { params: { groupId: string } 
   const [uploaded, setUploaded] = useState(false)
   const [memberCount, setMemberCount] = useState(0)
   const [userName, setUserName] = useState("")
-  const [userEmail, setUserEmail] = useState("")
 
   useEffect(() => {
     // Simulate loading group data - replace with real API call later
@@ -34,25 +33,13 @@ export default function JoinGroupPage({ params }: { params: { groupId: string } 
       return
     }
 
-    if (!userEmail.trim()) {
-      alert("Vul eerst je email in!")
-      return
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(userEmail.trim())) {
-      alert("Vul een geldig email adres in!")
-      return
-    }
-
     setUploading(true)
     try {
       const formData = new FormData()
       formData.append("photo", file)
       formData.append("groupId", params.groupId)
       formData.append("userName", userName.trim())
-      formData.append("email", userEmail.trim())
+      formData.append("displayName", userName.trim()) // Use name for display
 
       const response = await fetch("/api/upload-photo", {
         method: "POST",
@@ -180,21 +167,6 @@ export default function JoinGroupPage({ params }: { params: { groupId: string } 
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Je email adres
-              </label>
-              <input
-                type="email"
-                placeholder="naam@email.com"
-                value={userEmail}
-                onChange={(e) => setUserEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Dit moet hetzelfde email zijn waarmee je bent uitgenodigd
-              </p>
-            </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">
@@ -204,7 +176,7 @@ export default function JoinGroupPage({ params }: { params: { groupId: string } 
                 type="file"
                 accept="image/*"
                 onChange={handlePhotoUpload}
-                disabled={uploading || !userName.trim() || !userEmail.trim()}
+                disabled={uploading || !userName.trim()}
                 className="w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-md text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 hover:border-gray-400 focus:outline-none focus:border-blue-500"
               />
             </div>

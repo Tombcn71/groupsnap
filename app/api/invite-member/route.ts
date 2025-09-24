@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
               <h1 style="color: #2563eb;">📸 GroupSnap Invitation</h1>
               <p>You've been invited to join a group photo!</p>
               <p>Click the link below to upload your photo:</p>
-              <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-group-photo-generator.vercel.app'}/join/${groupId}" 
+                     <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-group-photo-generator.vercel.app'}/join/${groupId}?email=${encodeURIComponent(email)}"
                  style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                 Join Group Photo
               </a>
