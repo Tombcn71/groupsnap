@@ -95,22 +95,27 @@ export async function POST(request: NextRequest) {
     
     const model = 'gemini-2.5-flash-image-preview'
     
-    const prompt = `Create a professional group photo by combining these ${images.length} individual photos into one cohesive group image.
+    const prompt = `IMPORTANT: Create a professional group photo by arranging these ${images.length} people together. You MUST preserve each person's exact facial features, skin tone, hair, and appearance from their individual photos.
 
 Group: "${group.name}"
 Members: ${images.map((img: any) => img.name).join(', ')}
 
-Instructions:
-- Arrange all ${images.length} people naturally in a group formation
-- Maintain each person's appearance from their individual photo
-- Use consistent lighting and shadows across all faces
-- Create a professional, friendly atmosphere
-- Ensure proper perspective and composition
-- Background: Clean, professional setting suitable for a group photo
+CRITICAL REQUIREMENTS:
+- Keep each person's face EXACTLY as shown in their individual photo
+- Do NOT change facial features, skin color, hair style, or eye color
+- Do NOT blend or morph faces - maintain individual identity
+- Simply arrange the people in a natural group formation
+- Use the same lighting and perspective for all people
+- Place them as if they are standing/sitting together for a real photo
 
-Style: Professional group photo, natural lighting, modern clean background
-Quality: High resolution, photorealistic
-Mood: Friendly, professional, engaging`
+Technical requirements:
+- Professional group photo composition
+- Consistent lighting across all faces (matching the brightest photo)
+- Clean, professional background (office, studio, or neutral setting)
+- High resolution, photorealistic quality
+- Natural, friendly expressions maintained from original photos
+
+Style: Corporate group photo, professional lighting, modern setting`
 
     const contents = [
       {
