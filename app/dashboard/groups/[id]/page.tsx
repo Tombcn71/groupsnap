@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { CheckCircle, Copy } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 export default function GroupPage({ params }: { params: { id: string } }) {
   const [inviteEmail, setInviteEmail] = useState("")
@@ -15,10 +16,18 @@ export default function GroupPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true)
   const [showCopyToast, setShowCopyToast] = useState(false)
   const [groupInfo, setGroupInfo] = useState<any>(null)
+  const [currentUser, setCurrentUser] = useState<any>(null)
 
   useEffect(() => {
     loadGroupData()
+    loadCurrentUser()
   }, [params.id])
+
+  const loadCurrentUser = async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    setCurrentUser(user)
+  }
 
   const loadGroupData = async () => {
     try {
@@ -97,7 +106,10 @@ export default function GroupPage({ params }: { params: { id: string } }) {
       const formData = new FormData()
       formData.append("photo", file)
       formData.append("groupId", params.id)
-      formData.append("userId", "current-user") // We'll fix this later with real auth
+      if (currentUser?.id) {
+        formData.append("userId", currentUser.id)
+      }
+      formData.append("displayName", currentUser?.email?.split('@')[0] || "Group Owner")
 
       const response = await fetch("/api/upload-photo", {
         method: "POST",

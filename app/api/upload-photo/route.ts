@@ -49,15 +49,22 @@ export async function POST(request: NextRequest) {
       console.log("Blob URL:", blob.url)
       
       // First delete existing photos for this user in this group
-      if (userId) {
+      if (userId && userId !== "current-user") {
         console.log("Deleting by user_id")
         await supabase
           .from("member_photos")
           .delete()
           .eq("group_id", groupId)
           .eq("user_id", userId)
-      } else if (userName) {
+      } else if (displayName) {
         console.log("Deleting by display_name")
+        await supabase
+          .from("member_photos")
+          .delete()
+          .eq("group_id", groupId)
+          .eq("display_name", displayName)
+      } else if (userName) {
+        console.log("Deleting by userName as display_name")
         await supabase
           .from("member_photos")
           .delete()
@@ -67,7 +74,7 @@ export async function POST(request: NextRequest) {
       
       const insertData = {
         group_id: groupId,
-        user_id: userId || null,
+        user_id: (userId && userId !== "current-user") ? userId : null,
         display_name: displayName || userName || null,
         image_url: blob.url,
         original_filename: file.name,
