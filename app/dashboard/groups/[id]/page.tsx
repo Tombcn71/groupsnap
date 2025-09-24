@@ -94,7 +94,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
   const handleGeneratePhoto = async () => {
     setGenerateLoading(true)
     try {
-      const response = await fetch("/api/test-generate", {
+      const response = await fetch("/api/generate-photo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

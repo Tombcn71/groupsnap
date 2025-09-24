@@ -34,9 +34,18 @@ export async function POST(request: NextRequest) {
       addRandomSuffix: true
     })
 
-    // Try to save to database
+    // Try to save to database (replace existing photo for this user/group)
     try {
       const supabase = createClient()
+      
+      // First delete existing photos for this user in this group
+      if (userId) {
+        await supabase
+          .from("member_photos")
+          .delete()
+          .eq("group_id", groupId)
+          .eq("user_id", userId)
+      }
       
       const { data, error } = await supabase
         .from("member_photos")
