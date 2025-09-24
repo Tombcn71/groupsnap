@@ -95,15 +95,7 @@ export async function POST(request: NextRequest) {
     
     const model = 'gemini-2.5-flash-image-preview'
     
-    const prompt = `Create a clean, professional teamshowing these ${images.length}.
-
-INSTRUCTIONS:
-
-- Keep each person's photo exactly as provided - do not modify faces
-- Add a professional background
-- Clean, modern corporate design
-
-Style: Corporate team showcase, clean layout, professional presentation`
+    const prompt = `Create a professional team photo with these ${images.length} people standing next to each other in a row. Keep each person's face exactly as shown in their individual photos. Professional background.`
 
     const contents = [
       {
