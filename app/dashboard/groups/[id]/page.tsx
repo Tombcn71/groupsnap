@@ -208,24 +208,54 @@ export default function GroupPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* Show Members with invite status */}
+        {/* Show uploaded photos */}
         <div className="bg-white border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">📋 Recent Invites</h2>
+          <h2 className="text-xl font-semibold mb-4">📸 Geüploade Foto's</h2>
           <div className="space-y-2">
-            {members.slice(-3).map((member, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
-                <span className="font-medium">{member.email}</span>
-                <span className={`px-3 py-1 rounded text-sm ${
-                  member.status === 'Owner' 
-                    ? 'bg-green-100 text-green-800'
-                    : member.status === 'Confirmed'
-                    ? 'bg-blue-100 text-blue-800' 
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {member.status}
-                </span>
-              </div>
-            ))}
+            {memberPhotos.length > 0 ? (
+              memberPhotos.map((photo, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded border border-green-200">
+                  <div className="flex items-center space-x-3">
+                    <img 
+                      src={photo.image_url} 
+                      alt="Member photo" 
+                      className="w-8 h-8 rounded-full object-cover border-2 border-green-200"
+                    />
+                    <span className="font-medium">{photo.display_name || photo.email || 'Anoniem'}</span>
+                  </div>
+                  <span className="px-3 py-1 rounded text-sm bg-green-100 text-green-800">
+                    ✅ Foto geüpload
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-4">Nog geen foto's geüpload</p>
+            )}
+          </div>
+        </div>
+
+        {/* Show invited members */}
+        <div className="bg-white border rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">📧 Uitgenodigde Members</h2>
+          <div className="space-y-2">
+            {members.length > 0 ? (
+              members.map((member, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                  <span className="font-medium">{member.email}</span>
+                  <span className={`px-3 py-1 rounded text-sm ${
+                    member.status === 'Owner' 
+                      ? 'bg-green-100 text-green-800'
+                      : member.status === 'confirmed'
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {member.status}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-4">Nog geen members uitgenodigd</p>
+            )}
           </div>
         </div>
 
@@ -341,70 +371,28 @@ export default function GroupPage({ params }: { params: { id: string } }) {
           </div>
         )}
 
-        {/* Photo Status Overview */}
+        {/* Simple Status Overview */}
         <div className="bg-white border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">📸 Photo Status</h2>
+          <h2 className="text-xl font-semibold mb-4">📊 Overzicht</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-green-50 p-4 rounded-lg text-center">
               <div className="text-2xl font-bold text-green-600">{memberPhotos.length}</div>
               <div className="text-sm text-green-600">Foto's geüpload</div>
             </div>
-            <div className="bg-yellow-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-yellow-600">{members.length - memberPhotos.length}</div>
-              <div className="text-sm text-yellow-600">Wacht op foto</div>
-            </div>
             <div className="bg-blue-50 p-4 rounded-lg text-center">
               <div className="text-2xl font-bold text-blue-600">{members.length}</div>
-              <div className="text-sm text-blue-600">Totaal leden</div>
+              <div className="text-sm text-blue-600">Uitgenodigd</div>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg text-center">
+              <div className="text-2xl font-bold text-purple-600">{memberPhotos.length >= 2 ? '✅' : '⏳'}</div>
+              <div className="text-sm text-purple-600">AI Ready</div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            {members.map((member, index) => {
-              const hasPhoto = memberPhotos.some(photo => photo.user_id === member.user_id || photo.display_name === member.email || photo.email === member.email)
-              const memberPhoto = memberPhotos.find(photo => photo.user_id === member.user_id || photo.display_name === member.email || photo.email === member.email)
-              
-              return (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                  <div className="flex items-center space-x-3">
-                    {memberPhoto && (
-                      <img 
-                        src={memberPhoto.image_url} 
-                        alt="Member photo" 
-                        className="w-8 h-8 rounded-full object-cover border-2 border-green-200"
-                      />
-                    )}
-                    <span>{member.email}</span>
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      member.status === 'invited' 
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {member.status}
-                  </span>
-                </div>
-                  <div className="flex items-center space-x-2">
-                    {hasPhoto ? (
-                      <span className="flex items-center text-green-600 text-sm">
-                        <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                        Foto geüpload
-                      </span>
-                    ) : (
-                      <span className="flex items-center text-gray-400 text-sm">
-                        <span className="w-2 h-2 bg-gray-300 rounded-full mr-1"></span>
-                        Geen foto
-                      </span>
-                    )}
-                </div>
-                </div>
-              )
-            })}
-        </div>
-
           <div className="mt-4 p-3 bg-blue-50 rounded">
             <p className="text-sm text-blue-700">
-              💡 <strong>Tip:</strong> Deel de join link in WhatsApp zodat iedereen hun foto kan uploaden!
+              💡 <strong>Tip:</strong> Deel de join link zodat mensen hun foto's kunnen uploaden!
             </p>
           </div>
         </div>
