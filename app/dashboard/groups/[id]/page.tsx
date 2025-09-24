@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export default function GroupPage({ params }: { params: { id: string } }) {
   const [inviteEmail, setInviteEmail] = useState("")
@@ -9,11 +9,40 @@ export default function GroupPage({ params }: { params: { id: string } }) {
   const [generateLoading, setGenerateLoading] = useState(false)
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([])
   const [generatedPhoto, setGeneratedPhoto] = useState<string | null>(null)
-  const [members, setMembers] = useState([
-    { email: "you@example.com", status: "Owner" },
-    { email: "member1@example.com", status: "Confirmed" },
-    { email: "member2@example.com", status: "Invited" }
-  ])
+  const [members, setMembers] = useState<any[]>([])
+  const [memberPhotos, setMemberPhotos] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadGroupData()
+  }, [params.id])
+
+  const loadGroupData = async () => {
+    try {
+      const response = await fetch(`/api/group-data/${params.id}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setMembers(data.members || [])
+        setMemberPhotos(data.memberPhotos || [])
+        if (data.generatedPhoto) {
+          setGeneratedPhoto(data.generatedPhoto)
+        }
+      } else {
+        console.error("Failed to load group data:", data.error)
+        // Fallback to empty arrays
+        setMembers([])
+        setMemberPhotos([])
+      }
+    } catch (error) {
+      console.error("Error loading group data:", error)
+      // Fallback to empty arrays
+      setMembers([])
+      setMemberPhotos([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const shareUrl = `https://v0-group-photo-generator.vercel.app/join/${params.id}`
 
@@ -41,8 +70,8 @@ export default function GroupPage({ params }: { params: { id: string } }) {
       if (response.ok) {
         alert(result.message)
         setInviteEmail("")
-        // Add to local state
-        setMembers(prev => [...prev, { email: inviteEmail.trim(), status: "Invited" }])
+        // Reload data to get fresh member list
+        loadGroupData()
       } else {
         alert(`Error: ${result.error}`)
         console.error("API Error:", result)
@@ -80,6 +109,8 @@ export default function GroupPage({ params }: { params: { id: string } }) {
         setUploadedPhotos([result.url])
         // Clear the file input
         e.target.value = ""
+        // Reload data to get fresh photo list
+        loadGroupData()
       } else {
         alert(`Error: ${result.error}`)
       }
@@ -108,6 +139,8 @@ export default function GroupPage({ params }: { params: { id: string } }) {
       if (response.ok) {
         setGeneratedPhoto(result.generatedImageUrl)
         alert("🎉 " + result.message)
+        // Reload data to get fresh generated photo
+        loadGroupData()
       } else {
         alert(`Generation failed: ${result.error}`)
         console.error("Generation error:", result)
@@ -247,7 +280,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
             onChange={(e) => e.target.files?.[0] && alert("✅ Background uploaded!")}
           />
           <p className="text-sm text-gray-500">Upload background image (school, office, etc.)</p>
-        </div>
+              </div>
 
         {/* Generate Photo */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6">
@@ -314,52 +347,61 @@ export default function GroupPage({ params }: { params: { id: string } }) {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="bg-green-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-green-600">2</div>
+              <div className="text-2xl font-bold text-green-600">{memberPhotos.length}</div>
               <div className="text-sm text-green-600">Foto's geüpload</div>
             </div>
             <div className="bg-yellow-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-yellow-600">1</div>
+              <div className="text-2xl font-bold text-yellow-600">{members.length - memberPhotos.length}</div>
               <div className="text-sm text-yellow-600">Wacht op foto</div>
             </div>
             <div className="bg-blue-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600">1</div>
-              <div className="text-sm text-blue-600">Achtergrond foto's</div>
+              <div className="text-2xl font-bold text-blue-600">{members.length}</div>
+              <div className="text-sm text-blue-600">Totaal leden</div>
             </div>
           </div>
 
           <div className="space-y-2">
-            {members.map((member, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                <div className="flex items-center space-x-3">
-                  <span>{member.email}</span>
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    member.status === 'Owner' 
-                      ? 'bg-green-100 text-green-800'
-                      : member.status === 'Confirmed'
-                      ? 'bg-blue-100 text-blue-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {member.status}
+            {members.map((member, index) => {
+              const hasPhoto = memberPhotos.some(photo => photo.user_id === member.user_id || photo.email === member.email)
+              const memberPhoto = memberPhotos.find(photo => photo.user_id === member.user_id || photo.email === member.email)
+              
+              return (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                  <div className="flex items-center space-x-3">
+                    {memberPhoto && (
+                      <img 
+                        src={memberPhoto.image_url} 
+                        alt="Member photo" 
+                        className="w-8 h-8 rounded-full object-cover border-2 border-green-200"
+                      />
+                    )}
+                    <span>{member.email}</span>
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      member.status === 'invited' 
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {member.status}
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {/* Simulate photo status */}
-                  {index === 0 || index === 1 ? (
-                    <span className="flex items-center text-green-600 text-sm">
-                      <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                      Foto geüpload
-                    </span>
-                  ) : (
-                    <span className="flex items-center text-gray-400 text-sm">
-                      <span className="w-2 h-2 bg-gray-300 rounded-full mr-1"></span>
-                      Geen foto
-                    </span>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {hasPhoto ? (
+                      <span className="flex items-center text-green-600 text-sm">
+                        <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                        Foto geüpload
+                      </span>
+                    ) : (
+                      <span className="flex items-center text-gray-400 text-sm">
+                        <span className="w-2 h-2 bg-gray-300 rounded-full mr-1"></span>
+                        Geen foto
+                      </span>
+                    )}
                 </div>
-              </div>
-            ))}
-          </div>
-          
+                </div>
+              )
+            })}
+        </div>
+
           <div className="mt-4 p-3 bg-blue-50 rounded">
             <p className="text-sm text-blue-700">
               💡 <strong>Tip:</strong> Deel de join link in WhatsApp zodat iedereen hun foto kan uploaden!
