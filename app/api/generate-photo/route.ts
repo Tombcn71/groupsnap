@@ -12,15 +12,19 @@ export async function POST(request: NextRequest) {
   let images: any[] = []
   
   try {
+    console.log("🔥 GENERATE PHOTO API CALLED!")
+    
     const body = await request.json()
     groupId = body.groupId
+    
+    console.log("📨 Request body:", JSON.stringify(body, null, 2))
 
     if (!groupId) {
+      console.log("❌ No group ID provided")
       return NextResponse.json({ error: "Group ID required" }, { status: 400 })
     }
 
     console.log("🍌 Using Astria.ai for group photo generation")
-
     console.log("🚀 Starting AI generation for group:", groupId)
     
     // Get group data from database
