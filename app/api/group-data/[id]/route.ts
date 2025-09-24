@@ -40,11 +40,28 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       console.error("Generated photos error:", generatedError)
     }
 
+    // Debug info
+    console.log("=== GROUP DATA DEBUG ===")
+    console.log("Group ID:", params.id)
+    console.log("Members found:", members?.length || 0, members)
+    console.log("Photos found:", memberPhotos?.length || 0, memberPhotos)
+    console.log("Members error:", membersError)
+    console.log("Photos error:", photosError)
+    console.log("========================")
+
     return NextResponse.json({
       success: true,
       members: members || [],
       memberPhotos: memberPhotos || [],
       generatedPhoto: generatedPhotos?.[0]?.image_url || null,
+      debug: {
+        groupId: params.id,
+        membersError: membersError?.message || null,
+        photosError: photosError?.message || null,
+        generatedError: generatedError?.message || null,
+        rawMembers: members,
+        rawPhotos: memberPhotos
+      },
       stats: {
         totalMembers: members?.length || 0,
         photosUploaded: memberPhotos?.length || 0,
