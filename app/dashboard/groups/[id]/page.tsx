@@ -158,29 +158,41 @@ export default function GroupPage({ params }: { params: { id: string } }) {
       <h1 className="text-3xl font-bold mb-2">Your Group 🚀</h1>
       <p className="text-gray-600 mb-2">ID: {params.id}</p>
       
-      {/* Share Link */}
+      {/* WhatsApp Share Link */}
       <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-        <h3 className="font-semibold text-green-800 mb-2">🔗 Share Link voor WhatsApp:</h3>
-        <div className="flex gap-2">
+        <h3 className="font-semibold text-green-800 mb-2">📱 WhatsApp Link Delen:</h3>
+        <div className="flex gap-2 mb-3">
           <input 
             type="text" 
             value={shareUrl}
             readOnly
-            className="flex-1 px-3 py-2 bg-white border border-green-300 rounded text-sm"
+            className="flex-1 px-3 py-2 bg-white border border-green-300 rounded text-sm font-mono"
           />
           <button
             onClick={() => {
               navigator.clipboard.writeText(shareUrl)
               alert("Link gekopieerd! Plak in WhatsApp groep 📱")
             }}
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm"
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm whitespace-nowrap"
           >
-            Kopieer Link
+            📋 Kopieer
+          </button>
+          <button
+            onClick={() => {
+              const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`📸 Meedoen met groepsfoto? Upload je foto hier: ${shareUrl}`)}`
+              window.open(whatsappUrl, '_blank')
+            }}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm whitespace-nowrap"
+          >
+            📲 WhatsApp
           </button>
         </div>
-        <p className="text-xs text-green-600 mt-2">
-          ✅ Mensen kunnen hun foto uploaden zonder account - perfect voor WhatsApp groepen!
-        </p>
+        <div className="bg-white p-3 rounded border border-green-200">
+          <p className="text-sm text-green-700 font-medium mb-1">Zo werkt het:</p>
+          <p className="text-xs text-green-600">
+            1️⃣ Deel link in WhatsApp groep → 2️⃣ Mensen klikken & uploaden foto → 3️⃣ Jij ziet hier wie heeft gereageerd!
+          </p>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -208,9 +220,9 @@ export default function GroupPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* Show uploaded photos */}
+        {/* Show who joined via link */}
         <div className="bg-white border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">📸 Geüploade Foto's</h2>
+          <h2 className="text-xl font-semibold mb-4">👥 Wie Hebben Gereageerd</h2>
           <div className="space-y-2">
             {memberPhotos.length > 0 ? (
               memberPhotos.map((photo, index) => (
@@ -219,27 +231,40 @@ export default function GroupPage({ params }: { params: { id: string } }) {
                     <img 
                       src={photo.image_url} 
                       alt="Member photo" 
-                      className="w-8 h-8 rounded-full object-cover border-2 border-green-200"
+                      className="w-10 h-10 rounded-full object-cover border-2 border-green-300"
                     />
-                    <span className="font-medium">{photo.display_name || photo.email || 'Anoniem'}</span>
+                    <div>
+                      <div className="font-medium">{photo.display_name || 'Anoniem'}</div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(photo.created_at).toLocaleDateString('nl-NL', { 
+                          day: 'numeric', 
+                          month: 'short', 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </div>
+                    </div>
                   </div>
-                  <span className="px-3 py-1 rounded text-sm bg-green-100 text-green-800">
-                    ✅ Foto geüpload
+                  <span className="px-3 py-1 rounded text-sm bg-green-100 text-green-800 flex items-center">
+                    ✅ Foto klaar
                   </span>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-center py-4">Nog geen foto's geüpload</p>
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-3">Nog niemand heeft de link gebruikt</p>
+                <p className="text-sm text-gray-400">Deel de WhatsApp link om te beginnen! 📱</p>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Show invited members */}
-        <div className="bg-white border rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">📧 Uitgenodigde Members</h2>
-          <div className="space-y-2">
-            {members.length > 0 ? (
-              members.map((member, index) => (
+        {/* Email invites (optional, for business use) */}
+        {members.length > 0 && (
+          <div className="bg-white border rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">📧 Email Invites (Business)</h2>
+            <div className="space-y-2">
+              {members.map((member, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded border">
                   <span className="font-medium">{member.email}</span>
                   <span className={`px-3 py-1 rounded text-sm ${
@@ -252,12 +277,10 @@ export default function GroupPage({ params }: { params: { id: string } }) {
                     {member.status}
                   </span>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-4">Nog geen members uitgenodigd</p>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Upload Photo */}
         <div className="bg-white border rounded-lg p-6">
