@@ -14,6 +14,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
   const [memberPhotos, setMemberPhotos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showCopyToast, setShowCopyToast] = useState(false)
+  const [groupInfo, setGroupInfo] = useState<any>(null)
 
   useEffect(() => {
     loadGroupData()
@@ -27,6 +28,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
       if (data.success) {
         setMembers(data.members || [])
         setMemberPhotos(data.memberPhotos || [])
+        setGroupInfo(data.groupInfo || null)
         if (data.generatedPhoto) {
           setGeneratedPhoto(data.generatedPhoto)
         }
@@ -157,8 +159,11 @@ export default function GroupPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="p-8 max-w-4xl mx-auto relative">
-      <h1 className="text-3xl font-bold mb-2">Your Group 🚀</h1>
-      <p className="text-gray-600 mb-2">ID: {params.id}</p>
+      <h1 className="text-3xl font-bold mb-2">{groupInfo?.name || 'Je Groep'} 🚀</h1>
+      {groupInfo?.description && (
+        <p className="text-gray-600 mb-2">{groupInfo.description}</p>
+      )}
+      <p className="text-xs text-gray-400 mb-4">ID: {params.id}</p>
       
       {/* WhatsApp Share Link */}
       <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
