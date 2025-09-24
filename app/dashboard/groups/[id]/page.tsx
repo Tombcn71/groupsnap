@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { CheckCircle, Copy } from "lucide-react"
 
 export default function GroupPage({ params }: { params: { id: string } }) {
   const [inviteEmail, setInviteEmail] = useState("")
@@ -12,6 +13,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
   const [members, setMembers] = useState<any[]>([])
   const [memberPhotos, setMemberPhotos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [showCopyToast, setShowCopyToast] = useState(false)
 
   useEffect(() => {
     loadGroupData()
@@ -154,7 +156,7 @@ export default function GroupPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-8 max-w-4xl mx-auto relative">
       <h1 className="text-3xl font-bold mb-2">Your Group 🚀</h1>
       <p className="text-gray-600 mb-2">ID: {params.id}</p>
       
@@ -171,11 +173,13 @@ export default function GroupPage({ params }: { params: { id: string } }) {
           <button
             onClick={() => {
               navigator.clipboard.writeText(shareUrl)
-              alert("Link gekopieerd! Plak in WhatsApp groep 📱")
+              setShowCopyToast(true)
+              setTimeout(() => setShowCopyToast(false), 3000)
             }}
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm whitespace-nowrap"
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm whitespace-nowrap flex items-center gap-2"
           >
-            📋 Kopieer
+            <Copy className="h-4 w-4" />
+            Kopieer
           </button>
           <button
             onClick={() => {
@@ -420,6 +424,14 @@ export default function GroupPage({ params }: { params: { id: string } }) {
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {showCopyToast && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-in slide-in-from-top-2 fade-in duration-300 z-50">
+          <CheckCircle className="h-5 w-5" />
+          <span className="font-medium">Link gekopieerd! 📱</span>
+        </div>
+      )}
     </div>
   )
 }
