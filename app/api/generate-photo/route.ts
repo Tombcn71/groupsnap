@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
     }
 
     const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY })
-    const model = genAI.models.generateContent
 
     // Select the first background for now (could be randomized or user-selected)
     const selectedBackground = backgrounds[0]
@@ -99,23 +98,6 @@ Nano Banana Instructions:
 
 Style: Photorealistic, natural lighting, professional group photo quality
 Output: High-resolution composite image that looks authentically photographed`
-
-    // Prepare the content array with background and member photos
-    const contents = [
-      prompt,
-      {
-        inlineData: {
-          mimeType: backgroundMimeType,
-          data: backgroundBase64,
-        },
-      },
-      ...memberPhotoData.map((member) => ({
-        inlineData: {
-          mimeType: member.mimeType,
-          data: member.data,
-        },
-      })),
-    ]
 
     // Generate the group photo using Gemini 2.5 Flash with Nano Banana
     console.log("Generating group photo with Nano Banana...")
