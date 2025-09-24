@@ -151,12 +151,6 @@ export default function JoinGroupPage({ params }: { params: { groupId: string } 
 
       {/* Main Content */}
       <main className="max-w-2xl mx-auto px-4 py-8">
-        {!group ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-500">Groep info laden...</p>
-          </div>
-        ) : (
         <Card className="mb-6">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-bold text-gray-900">
@@ -243,7 +237,6 @@ export default function JoinGroupPage({ params }: { params: { groupId: string } 
         <div className="text-center mt-6 text-sm text-gray-500">
           <p>Powered by AI • Je foto wordt veilig opgeslagen</p>
         </div>
-        )}
       </main>
     </div>
   )
