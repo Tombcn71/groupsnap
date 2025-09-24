@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     // Try to save to database (replace existing photo for this user/group)
     try {
       // Use server client to bypass RLS for join page uploads
-      const supabase = createClient()
+      const supabase = await createClient()
       
       console.log("=== UPLOAD DEBUG ===")
       console.log("GroupId:", groupId)

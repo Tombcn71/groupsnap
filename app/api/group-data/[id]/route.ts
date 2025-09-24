@@ -5,7 +5,7 @@ export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Get group members
     const { data: members, error: membersError } = await supabase
