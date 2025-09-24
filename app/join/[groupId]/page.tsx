@@ -39,6 +39,7 @@ export default function JoinGroupPage({ params }: { params: { groupId: string } 
       formData.append("photo", file)
       formData.append("groupId", params.groupId)
       formData.append("userName", userName.trim())
+      formData.append("email", userName.trim()) // userName is email on join page
 
       const response = await fetch("/api/upload-photo", {
         method: "POST",

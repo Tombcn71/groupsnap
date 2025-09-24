@@ -10,6 +10,8 @@ export async function POST(request: NextRequest) {
     const file = formData.get("photo") as File
     const groupId = formData.get("groupId") as string
     const userId = formData.get("userId") as string
+    const userName = formData.get("userName") as string
+    const email = formData.get("email") as string
 
     if (!file || !groupId) {
       return NextResponse.json({ error: "Missing photo or groupId" }, { status: 400 })
@@ -45,6 +47,18 @@ export async function POST(request: NextRequest) {
           .delete()
           .eq("group_id", groupId)
           .eq("user_id", userId)
+      } else if (email) {
+        await supabase
+          .from("member_photos")
+          .delete()
+          .eq("group_id", groupId)
+          .eq("email", email)
+      } else if (userName) {
+        await supabase
+          .from("member_photos")
+          .delete()
+          .eq("group_id", groupId)
+          .eq("email", userName) // userName could be email
       }
       
       const { data, error } = await supabase
@@ -52,6 +66,7 @@ export async function POST(request: NextRequest) {
         .insert({
           group_id: groupId,
           user_id: userId || null,
+          email: email || userName || null, // Store email for matching
           image_url: blob.url,
           original_filename: file.name,
           file_size: file.size
