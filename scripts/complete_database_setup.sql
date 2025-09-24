@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS public.group_members (
   status TEXT DEFAULT 'invited' CHECK (status IN ('invited', 'uploaded', 'confirmed')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  invited_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  joined_at TIMESTAMP WITH TIME ZONE,
   UNIQUE(group_id, email)
 );
 
@@ -215,6 +216,7 @@ CREATE POLICY "generated_photos_delete_owner" ON public.generated_photos FOR DEL
 CREATE INDEX IF NOT EXISTS idx_groups_owner_id ON public.groups(owner_id);
 CREATE INDEX IF NOT EXISTS idx_group_members_group_id ON public.group_members(group_id);
 CREATE INDEX IF NOT EXISTS idx_group_members_user_id ON public.group_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_group_members_invited_at ON public.group_members(invited_at);
 CREATE INDEX IF NOT EXISTS idx_member_photos_group_id ON public.member_photos(group_id);
 CREATE INDEX IF NOT EXISTS idx_member_photos_user_id ON public.member_photos(user_id);
 CREATE INDEX IF NOT EXISTS idx_member_photos_display_name ON public.member_photos(group_id, display_name);
