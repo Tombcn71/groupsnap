@@ -198,10 +198,57 @@ Mood: Friendly, professional, engaging`
       }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Generation error:", error)
+    
+    // Check if it's a quota/rate limit error
+    if (error.message?.includes("quota") || error.message?.includes("RESOURCE_EXHAUSTED") || error.message?.includes("429")) {
+      // Create a fallback image when quota is exceeded
+      try {
+        const fallbackImageUrl = `https://via.placeholder.com/800x600/2563eb/ffffff?text=⏰+AI+Quota+Exceeded+%7C+Try+again+in+a+few+minutes`
+        const fallbackResponse = await fetch(fallbackImageUrl)
+        const fallbackBuffer = await fallbackResponse.arrayBuffer()
+        
+        const timestamp = Date.now()
+        const filename = `quota-exceeded-${groupId}-${timestamp}.jpg`
+        
+        const blob = await put(filename, fallbackBuffer, {
+          access: "public",
+          addRandomSuffix: true
+        })
+
+        // Save placeholder to database
+        const supabase = await createClient()
+        await supabase
+          .from("generated_photos")
+          .insert({
+            group_id: groupId,
+            image_url: blob.url,
+            prompt_used: "Quota exceeded - placeholder generated",
+            generation_metadata: {
+              model: "quota-fallback",
+              member_count: images.length,
+              members: images.map(img => img.name),
+              error_type: "quota_exceeded",
+              generated_at: new Date().toISOString()
+            }
+          })
+
+        return NextResponse.json({
+          success: true,
+          message: `⏰ Google AI quota exceeded. Placeholder created with ${images.length} members. Try again in a few minutes for AI generation.`,
+          generatedImageUrl: blob.url,
+          isPlaceholder: true,
+          retryAfter: "10-60 seconds"
+        })
+        
+      } catch (fallbackError) {
+        console.error("Fallback error:", fallbackError)
+      }
+    }
+    
     return NextResponse.json({
-      error: "Failed to generate group photo: " + error.message
+      error: "Failed to generate group photo: " + (error.message || error)
     }, { status: 500 })
   }
 }
