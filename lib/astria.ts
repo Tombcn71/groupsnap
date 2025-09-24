@@ -36,6 +36,13 @@ export class AstriaService {
     group: GroupData, 
     groupId: string
   ): Promise<AstriaGenerationResult> {
+    // First validate API key
+    console.log("🔑 Validating Astria API key...")
+    const isValidKey = await this.validateApiKey()
+    if (!isValidKey) {
+      throw new Error("Invalid Astria API key. Please check your ASTRIA_API_KEY environment variable.")
+    }
+    console.log("✅ API key is valid")
     const prompt = `Professional group photo composition using Nano Banana style. 
 
 Create a cohesive group photo by arranging all ${images.length} people naturally together:
@@ -72,34 +79,53 @@ Instructions:
     console.log(`📤 Uploaded ${uploadedImages.length} reference images to temp storage`)
 
     // Create prompt with Astria.ai API
+    const requestBody = {
+      tune_id: 'gemini-2', // This needs to be your actual tune ID
+      prompt: prompt,
+      input_image: uploadedImages[0], // Primary reference image
+      w: 1024,
+      h: 1024,
+      style: 'Photographic',
+      scheduler: 'euler_a',
+      steps: 30,
+      cfg: 7.5,
+      super_resolution: true,
+      callback: process.env.ASTRIA_WEBHOOK_URL || undefined // Optional webhook
+    }
+
+    console.log("📤 Creating Astria prompt with body:", JSON.stringify(requestBody, null, 2))
+
     const astriaResponse = await fetch(`${this.baseUrl}/tunes/prompts`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        tune_id: 'gemini-2', // This needs to be your actual tune ID
-        prompt: prompt,
-        input_image: uploadedImages[0], // Primary reference image
-        w: 1024,
-        h: 1024,
-        style: 'Photographic',
-        scheduler: 'euler_a',
-        steps: 30,
-        cfg: 7.5,
-        super_resolution: true,
-        callback: process.env.ASTRIA_WEBHOOK_URL || undefined // Optional webhook
-      })
+      body: JSON.stringify(requestBody)
     })
+
+    console.log("📥 Astria response status:", astriaResponse.status)
 
     if (!astriaResponse.ok) {
       const errorText = await astriaResponse.text()
-      throw new Error(`Astria API error: ${astriaResponse.status} - ${errorText}`)
+      console.error("❌ Astria API error response:", {
+        status: astriaResponse.status,
+        statusText: astriaResponse.statusText,
+        body: errorText,
+        url: `${this.baseUrl}/tunes/prompts`
+      })
+      
+      if (astriaResponse.status === 401) {
+        throw new Error(`Astria API authentication failed. Check your API key.`)
+      } else if (astriaResponse.status === 404) {
+        throw new Error(`Astria API endpoint not found. Check the tune_id 'gemini-2' exists.`)
+      } else {
+        throw new Error(`Astria API error: ${astriaResponse.status} - ${errorText}`)
+      }
     }
 
     const astriaResult = await astriaResponse.json()
-    console.log("🍌 Astria.ai prompt created:", astriaResult.id)
+    console.log("🍌 Astria.ai prompt created successfully:", JSON.stringify(astriaResult, null, 2))
 
     // Poll for completion (since webhooks might not be set up)
     const generatedImageUrl = await this.pollForCompletion(astriaResult.id)
@@ -119,10 +145,15 @@ Instructions:
     let attempts = 0
     let generatedImageUrl: string | null = null
     
+    console.log(`🔍 Starting polling for prompt ID: ${promptId}`)
+    
     while (attempts < 30 && !generatedImageUrl) { // Max 5 minutes
       await new Promise(resolve => setTimeout(resolve, 10000)) // Wait 10 seconds
       
-      const statusResponse = await fetch(`${this.baseUrl}/tunes/prompts/${promptId}`, {
+      const statusUrl = `${this.baseUrl}/tunes/prompts/${promptId}`
+      console.log(`📡 Checking status at: ${statusUrl}`)
+      
+      const statusResponse = await fetch(statusUrl, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
         }
@@ -131,16 +162,28 @@ Instructions:
       if (statusResponse.ok) {
         const status = await statusResponse.json()
         console.log(`🔄 Astria generation status: ${status.status} (attempt ${attempts + 1}/30)`)
+        console.log(`📊 Full status response:`, JSON.stringify(status, null, 2))
         
         if (status.status === 'finished' && status.images && status.images.length > 0) {
           generatedImageUrl = status.images[0].url
           console.log("✅ Astria.ai generation completed!")
           break
         } else if (status.status === 'failed') {
-          throw new Error('Astria.ai generation failed')
+          console.error("❌ Astria generation failed:", status)
+          throw new Error(`Astria.ai generation failed: ${status.failure_reason || 'Unknown reason'}`)
         }
       } else {
-        console.warn(`⚠️ Failed to check status (attempt ${attempts + 1}):`, statusResponse.status)
+        const errorText = await statusResponse.text()
+        console.error(`⚠️ Status check failed (attempt ${attempts + 1}/30):`, {
+          status: statusResponse.status,
+          statusText: statusResponse.statusText,
+          body: errorText,
+          url: statusUrl
+        })
+        
+        if (statusResponse.status === 404) {
+          throw new Error(`Prompt ID ${promptId} not found. The generation may have expired or the ID is incorrect.`)
+        }
       }
       
       attempts++
