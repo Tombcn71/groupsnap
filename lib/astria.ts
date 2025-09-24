@@ -79,8 +79,15 @@ Instructions:
     console.log(`📤 Uploaded ${uploadedImages.length} reference images to temp storage`)
 
     // Create prompt with Astria.ai API
+    // Note: tune_id should be a number, not a string
+    const tuneId = process.env.ASTRIA_TUNE_ID ? parseInt(process.env.ASTRIA_TUNE_ID) : null
+    
+    if (!tuneId) {
+      throw new Error("ASTRIA_TUNE_ID environment variable is required (should be a number)")
+    }
+
     const requestBody = {
-      tune_id: 'gemini-2', // This needs to be your actual tune ID
+      tune_id: tuneId, // Use your actual trained tune ID
       prompt: prompt,
       input_image: uploadedImages[0], // Primary reference image
       w: 1024,
@@ -90,7 +97,9 @@ Instructions:
       steps: 30,
       cfg: 7.5,
       super_resolution: true,
-      callback: process.env.ASTRIA_WEBHOOK_URL || undefined // Optional webhook
+      callback: process.env.ASTRIA_WEBHOOK_URL ? 
+        `${process.env.ASTRIA_WEBHOOK_URL}?group_id=${groupId}&webhook_secret=${process.env.ASTRIA_WEBHOOK_SECRET}` : 
+        undefined // Optional webhook with group context
     }
 
     console.log("📤 Creating Astria prompt with body:", JSON.stringify(requestBody, null, 2))
@@ -128,7 +137,7 @@ Instructions:
     console.log("🍌 Astria.ai prompt created successfully:", JSON.stringify(astriaResult, null, 2))
 
     // Poll for completion (since webhooks might not be set up)
-    const generatedImageUrl = await this.pollForCompletion(astriaResult.id)
+    const generatedImageUrl = await this.pollForCompletion(astriaResult.id, tuneId)
 
     return {
       url: generatedImageUrl,
@@ -141,7 +150,7 @@ Instructions:
     }
   }
 
-  private async pollForCompletion(promptId: string): Promise<string> {
+  private async pollForCompletion(promptId: string, tuneId: number): Promise<string> {
     let attempts = 0
     let generatedImageUrl: string | null = null
     
@@ -150,8 +159,9 @@ Instructions:
     while (attempts < 30 && !generatedImageUrl) { // Max 5 minutes
       await new Promise(resolve => setTimeout(resolve, 10000)) // Wait 10 seconds
       
+      // Try the individual prompt endpoint first
       const statusUrl = `${this.baseUrl}/tunes/prompts/${promptId}`
-      console.log(`📡 Checking status at: ${statusUrl}`)
+      console.log(`📡 Checking individual prompt status at: ${statusUrl}`)
       
       const statusResponse = await fetch(statusUrl, {
         headers: {
@@ -161,16 +171,46 @@ Instructions:
       
       if (statusResponse.ok) {
         const status = await statusResponse.json()
-        console.log(`🔄 Astria generation status: ${status.status} (attempt ${attempts + 1}/30)`)
-        console.log(`📊 Full status response:`, JSON.stringify(status, null, 2))
+        console.log(`🔄 Prompt status: ${status.status} (attempt ${attempts + 1}/30)`)
+        console.log(`📊 Full prompt response:`, JSON.stringify(status, null, 2))
         
         if (status.status === 'finished' && status.images && status.images.length > 0) {
-          generatedImageUrl = status.images[0].url
-          console.log("✅ Astria.ai generation completed!")
-          break
+          // Images can be strings or objects with url property
+          const imageUrl = typeof status.images[0] === 'string' ? status.images[0] : status.images[0].url
+          if (imageUrl) {
+            generatedImageUrl = imageUrl
+            console.log("✅ Astria.ai generation completed!")
+            break
+          }
         } else if (status.status === 'failed') {
           console.error("❌ Astria generation failed:", status)
           throw new Error(`Astria.ai generation failed: ${status.failure_reason || 'Unknown reason'}`)
+        }
+      } else if (statusResponse.status === 404) {
+        // If individual prompt not found, try getting all prompts for the tune
+        console.log(`📡 Prompt not found individually, checking all prompts for tune ${tuneId}`)
+        
+        const allPromptsUrl = `${this.baseUrl}/tunes/${tuneId}/prompts`
+        const allPromptsResponse = await fetch(allPromptsUrl, {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+          }
+        })
+        
+        if (allPromptsResponse.ok) {
+          const allPrompts = await allPromptsResponse.json()
+          console.log(`📋 Found ${allPrompts.length} prompts for tune ${tuneId}`)
+          
+          // Find our prompt in the list
+          const ourPrompt = allPrompts.find((p: any) => p.id.toString() === promptId)
+          if (ourPrompt && ourPrompt.status === 'finished' && ourPrompt.images && ourPrompt.images.length > 0) {
+            const imageUrl = typeof ourPrompt.images[0] === 'string' ? ourPrompt.images[0] : ourPrompt.images[0].url
+            if (imageUrl) {
+              generatedImageUrl = imageUrl
+              console.log("✅ Found completed prompt in tune prompts list!")
+              break
+            }
+          }
         }
       } else {
         const errorText = await statusResponse.text()
@@ -180,10 +220,6 @@ Instructions:
           body: errorText,
           url: statusUrl
         })
-        
-        if (statusResponse.status === 404) {
-          throw new Error(`Prompt ID ${promptId} not found. The generation may have expired or the ID is incorrect.`)
-        }
       }
       
       attempts++
