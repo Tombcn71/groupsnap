@@ -92,13 +92,9 @@ export default function JoinGroupPage({ params }: { params: { groupId: string } 
             <p className="text-sm text-gray-600">
               Je krijgt bericht zodra de groepsfoto klaar is!
             </p>
-            <Button 
-              onClick={() => window.location.reload()}
-              variant="outline"
-              className="w-full"
-            >
-              Nog een foto uploaden
-            </Button>
+            <p className="text-sm text-gray-600">
+              Je foto is geüpload! De groep owner zal je informeren wanneer de groepsfoto klaar is.
+            </p>
           </CardContent>
         </Card>
       </div>
