@@ -95,27 +95,18 @@ export async function POST(request: NextRequest) {
     
     const model = 'gemini-2.5-flash-image-preview'
     
-    const prompt = `IMPORTANT: Create a professional group photo by arranging these ${images.length} people together. You MUST preserve each person's exact facial features, skin tone, hair, and appearance from their individual photos.
+    const prompt = `Create a clean, professional photo collage layout showing these ${images.length} team members.
 
-Group: "${group.name}"
-Members: ${images.map((img: any) => img.name).join(', ')}
+INSTRUCTIONS:
+- Create a grid or arranged layout of the individual photos
+- Keep each person's photo exactly as provided - do not modify faces
+- Add a professional background or frame around the arrangement
+- Make it look like a "Meet the Team" style layout
+- Clean, modern corporate design
+- Equal sizing for each person's photo
+- Professional spacing and alignment
 
-CRITICAL REQUIREMENTS:
-- Keep each person's face EXACTLY as shown in their individual photo
-- Do NOT change facial features, skin color, hair style, or eye color
-- Do NOT blend or morph faces - maintain individual identity
-- Simply arrange the people in a natural group formation
-- Use the same lighting and perspective for all people
-- Place them as if they are standing/sitting together for a real photo
-
-Technical requirements:
-- Professional group photo composition
-- Consistent lighting across all faces (matching the brightest photo)
-- Clean, professional background (office, studio, or neutral setting)
-- High resolution, photorealistic quality
-- Natural, friendly expressions maintained from original photos
-
-Style: Corporate group photo, professional lighting, modern setting`
+Style: Corporate team showcase, clean layout, professional presentation`
 
     const contents = [
       {
