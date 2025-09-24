@@ -40,14 +40,23 @@ export async function POST(request: NextRequest) {
     try {
       const supabase = createClient()
       
+      console.log("=== UPLOAD DEBUG ===")
+      console.log("GroupId:", groupId)
+      console.log("UserId:", userId)
+      console.log("UserName:", userName)
+      console.log("DisplayName:", displayName)
+      console.log("Blob URL:", blob.url)
+      
       // First delete existing photos for this user in this group
       if (userId) {
+        console.log("Deleting by user_id")
         await supabase
           .from("member_photos")
           .delete()
           .eq("group_id", groupId)
           .eq("user_id", userId)
       } else if (userName) {
+        console.log("Deleting by display_name")
         await supabase
           .from("member_photos")
           .delete()
@@ -55,18 +64,24 @@ export async function POST(request: NextRequest) {
           .eq("display_name", userName)
       }
       
+      const insertData = {
+        group_id: groupId,
+        user_id: userId || null,
+        display_name: displayName || userName || null,
+        image_url: blob.url,
+        original_filename: file.name,
+        file_size: file.size
+      }
+      
+      console.log("Inserting data:", insertData)
+      
       const { data, error } = await supabase
         .from("member_photos")
-        .insert({
-          group_id: groupId,
-          user_id: userId || null,
-          display_name: displayName || userName || null, // Store name for matching
-          image_url: blob.url,
-          original_filename: file.name,
-          file_size: file.size
-        })
+        .insert(insertData)
         .select()
         .single()
+      
+      console.log("Insert result:", { data, error })
 
       if (error) {
         console.error("Database error:", error)
