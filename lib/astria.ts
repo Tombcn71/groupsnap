@@ -36,13 +36,7 @@ export class AstriaService {
     group: GroupData, 
     groupId: string
   ): Promise<AstriaGenerationResult> {
-    // First validate API key
-    console.log("🔑 Validating Astria API key...")
-    const isValidKey = await this.validateApiKey()
-    if (!isValidKey) {
-      throw new Error("Invalid Astria API key. Please check your ASTRIA_API_KEY environment variable.")
-    }
-    console.log("✅ API key is valid")
+    console.log("🍌 Starting Astria generation...")
     const prompt = `Professional group photo composition using Nano Banana style. 
 
 Create a cohesive group photo by arranging all ${images.length} people naturally together:
@@ -78,28 +72,16 @@ Instructions:
 
     console.log(`📤 Uploaded ${uploadedImages.length} reference images to temp storage`)
 
-    // Create prompt with Astria.ai API
-    // Note: tune_id should be a number, not a string
-    const tuneId = process.env.ASTRIA_TUNE_ID ? parseInt(process.env.ASTRIA_TUNE_ID) : null
-    
-    if (!tuneId) {
-      throw new Error("ASTRIA_TUNE_ID environment variable is required (should be a number)")
-    }
-
+    // Create prompt with Astria.ai API - keep it simple!
     const requestBody = {
-      tune_id: tuneId, // Use your actual trained tune ID
+      tune_id: 690649, // Use your actual tune ID - just hardcode it for now
       prompt: prompt,
       input_image: uploadedImages[0], // Primary reference image
       w: 1024,
       h: 1024,
-      style: 'Photographic',
-      scheduler: 'euler_a',
       steps: 30,
-      cfg: 7.5,
-      super_resolution: true,
-      callback: process.env.ASTRIA_WEBHOOK_URL ? 
-        `${process.env.ASTRIA_WEBHOOK_URL}?group_id=${groupId}&webhook_secret=${process.env.ASTRIA_WEBHOOK_SECRET}` : 
-        undefined // Optional webhook with group context
+      cfg: 7.5
+      // No webhooks, no complications - just generate!
     }
 
     console.log("📤 Creating Astria prompt with body:", JSON.stringify(requestBody, null, 2))
@@ -136,8 +118,8 @@ Instructions:
     const astriaResult = await astriaResponse.json()
     console.log("🍌 Astria.ai prompt created successfully:", JSON.stringify(astriaResult, null, 2))
 
-    // Poll for completion (since webhooks might not be set up)
-    const generatedImageUrl = await this.pollForCompletion(astriaResult.id, tuneId)
+    // Poll for completion - simple polling
+    const generatedImageUrl = await this.pollForCompletion(astriaResult.id, 690649)
 
     return {
       url: generatedImageUrl,
